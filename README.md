@@ -5,6 +5,29 @@
 
 [English](#english) | [中文说明](#chinese)
 
+### 📊 Performance Comparison (性能碾压对比)
+
+Here is a real-world performance test on a 1C1G (1 vCPU, 1GB RAM) VPS, comparing MicroWARP with the widely used `caomingjun/warp`.
+
+以下是在 1C1G 廉价小鸡上的真实运行数据截图对比。你可以清楚地看到 MicroWARP 是如何榨干物理机极限的：
+
+| Metric (性能指标) | `caomingjun/warp` (Official Daemon) | 🚀 `MicroWARP` (Our pure C + Kernel approach) | 碾压级提升 (Improvement) |
+| :--- | :--- | :--- | :--- |
+| **Image Size**<br>(Docker 镜像体积) | 201 MB | **9.08 MB** | 📉 **直降 95%** |
+| **RAM Usage**<br>(日常内存占用) | ~150 MB | **800 KiB** (< 1MB) | 📉 **暴降 99.4%** |
+| **CPU Overhead**<br>(高并发 CPU 损耗) | High (Userspace App) | **~0.25%** (Kernel Space) | ⚡ **近乎为零** |
+| **Core Engine**<br>(底层核心引擎) | Cloudflare `warp-cli` (Rust/Heavy) | Linux `wg0` + Pure C `microsocks` | 🛠️ **极简硬核** |
+
+> **🔥 Real `docker stats` output (真实的生产环境终端输出):**
+> ```text
+> CONTAINER ID   NAME       CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O
+> 2fa58f84c517   warp       0.25%     800KiB / 967.4MiB     0.08%     48.8MB / 39.1MB   238kB / 36.9kB
+> ```
+> *Yes, you read that right. It processed ~90MB of traffic using only **800 KB** of RAM!*
+> *(没看错，它在处理了近 90MB 网络吞吐的同时，仅仅占用了 **800 KB** 的内存！)*
+
+---
+
 <a name="english"></a>
 ## 🇬🇧 English
 
@@ -18,7 +41,7 @@ Many popular WARP Docker images (like `caomingjun/warp`) rely on the official Cl
 **MicroWARP** does things differently:
 1. **Kernel-Level WireGuard**: It drops the bloated official client and uses Linux's native `wg0` interface. CPU usage is almost zero.
 2. **MicroSOCKS**: It uses a pure C-based `microsocks` server instead of heavy Go/Rust proxies.
-3. **Extreme Low RAM**: Runs smoothly on **< 5MB RAM**. Perfect for 1C1G cheap VPS.
+3. **Extreme Low RAM**: Runs smoothly on **< 5MB RAM** (often under 1MB). Perfect for 1C1G cheap VPS.
 4. **Multi-Arch**: Native support for `amd64` and `arm64` (Oracle Cloud ARM ready).
 
 ### 📦 Quick Start
@@ -26,7 +49,9 @@ Many popular WARP Docker images (like `caomingjun/warp`) rely on the official Cl
 You can seamlessly replace your existing WARP proxy. Just map port `1080` and give it `NET_ADMIN` privileges. Create a `docker-compose.yml`:
 
 ```yaml
-vservices:
+version: '3.8'
+
+services:
   microwarp:
     image: ghcr.io/ccbkkb/microwarp:latest
     container_name: microwarp
@@ -39,7 +64,7 @@ vservices:
     sysctls:
       - net.ipv4.conf.all.src_valid_mark=1
     volumes:
-      - warp-data:/etc/wireguard # Keep account data
+      - warp-data:/etc/wireguard # Keep account data to avoid rate limits
 
 volumes:
   warp-data:
@@ -70,7 +95,7 @@ Zero configuration required. On the first run, MicroWARP will automatically regi
 **MicroWARP** 采用了完全不同的极客底层架构：
 1. **内核级 WireGuard**：彻底抛弃臃肿的官方客户端，直接调用 Linux 原生内核态的 `wg0` 网卡接管流量，CPU 损耗近乎为零。
 2. **MicroSOCKS 引擎**：使用纯 C 语言编写的 `microsocks` 服务器替代繁重的 Go/Rust 代理引擎。
-3. **极致极低内存**：高并发下内存占用依然 **< 5MB**。专为 1C1G 的廉价小内存 VPS 拯救者。
+3. **极致极低内存**：高并发下内存占用依然 **< 5MB**（实测常驻 800KB 左右）。专为 1C1G 的廉价小内存 VPS 打造的拯救者。
 4. **多架构支持**：原生支持 `amd64` 和 `arm64`（完美兼容甲骨文免费 ARM 机器）。
 
 ### 📦 快速开始
@@ -78,6 +103,8 @@ Zero configuration required. On the first run, MicroWARP will automatically regi
 你可以零成本无缝替换掉现有的 WARP 代理。只需映射 `1080` 端口并赋予容器 `NET_ADMIN` 网络管理权限。新建一个 `docker-compose.yml`：
 
 ```yaml
+version: '3.8'
+
 services:
   microwarp:
     image: ghcr.io/ccbkkb/microwarp:latest
@@ -91,7 +118,7 @@ services:
     sysctls:
       - net.ipv4.conf.all.src_valid_mark=1
     volumes:
-      - warp-data:/etc/wireguard # 持久化保存账号凭证
+      - warp-data:/etc/wireguard # 持久化保存账号凭证，防止重启触发风控
 
 volumes:
   warp-data:
@@ -102,7 +129,7 @@ volumes:
 docker compose up -d
 ```
 
-启动后，将你的应用（Telegram、v2ray、Xray、AIzaSy 等）的 SOCKS5 代理指向 `127.0.0.1:1080`，你的出站流量就已经被 Cloudflare 骨干网完美接管并洗白了！
+启动后，将你的应用（Telegram、v2ray、Xray、AIzaSy、Grok2API 等）的 SOCKS5 代理指向 `127.0.0.1:1080`，你的出站流量就已经被 Cloudflare 骨干网完美接管并洗白了！
 
 ### 📝 全自动免配置
 你不需要手动提取任何密钥。首次启动时，MicroWARP 会在后台全自动向 Cloudflare 申请注册免费 WARP 账户，提取节点信息，并永久保存在本地的数据卷中。
