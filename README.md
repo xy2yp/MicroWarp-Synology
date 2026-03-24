@@ -1,6 +1,5 @@
 # MicroWARP 🚀
 
-[![Docker Pulls](https://img.shields.io/badge/docker-ready-blue.svg)](https://github.com/ccbkkb/MicroWARP/packages)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 [English](#english) |[中文说明](#chinese)
@@ -53,7 +52,7 @@ version: '3.8'
 
 services:
   microwarp:
-    image: ghcr.io/ccbkkb/microwarp:latest
+    image: xy2yp/microwarp-synology:latest
     container_name: microwarp
     restart: always
     ports:
@@ -63,6 +62,9 @@ services:
       - SYS_MODULE
     sysctls:
       - net.ipv4.conf.all.src_valid_mark=1
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     volumes:
       - warp-data:/etc/wireguard # Keep account data to avoid rate limits
 
@@ -130,7 +132,7 @@ version: '3.8'
 
 services:
   microwarp:
-    image: ghcr.io/ccbkkb/microwarp:latest
+    image: xy2yp/microwarp-synology:latest
     container_name: microwarp
     restart: always
     ports:
@@ -140,6 +142,9 @@ services:
       - SYS_MODULE
     sysctls:
       - net.ipv4.conf.all.src_valid_mark=1
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     volumes:
       - warp-data:/etc/wireguard # 持久化保存账号凭证，防止重启触发风控
 
